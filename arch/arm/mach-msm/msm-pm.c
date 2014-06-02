@@ -660,7 +660,9 @@ static enum msm_pm_time_stats_id msm_pm_power_collapse(bool from_idle)
 #ifdef CONFIG_LGE_PM
 	if (cpu == 0 && from_idle == 0)
 	{
+#ifdef CONFIG_HW_PERF_EVENTS
 		clock_debug_print_enabled();
+#endif
 		gpio_debug_print();
 	}
 #endif
@@ -805,6 +807,8 @@ int msm_pm_wait_cpu_shutdown(unsigned int cpu)
 		if (acc_sts & msm_pm_slp_sts[cpu].mask)
 			return 0;
 		udelay(100);
+		WARN(++timeout == 50, "CPU%u didn't collapse within 5ms\n",
+					cpu);
 	}
 
 	pr_info("%s(): Timed out waiting for CPU %u SPM to enter sleep state",

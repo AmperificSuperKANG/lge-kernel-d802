@@ -7,7 +7,7 @@ endif
 obj-y += clock.o clock-voter.o clock-dummy.o clock-generic.o
 obj-y += modem_notifier.o
 obj-$(CONFIG_USE_OF) += board-dt.o
-obj-$(CONFIG_DEBUG_FS) += nohlt.o clock-debug.o
+obj-$(CONFIG_DEBUG_FS) += nohlt.o
 obj-$(CONFIG_KEXEC) += msm_kexec.o
 
 obj-$(CONFIG_MSM_PROC_COMM) += proc_comm.o
@@ -34,14 +34,15 @@ obj-$(CONFIG_ARCH_MSM_SCORPIONMP) += perf_event_msm_l2.o
 ifndef CONFIG_OF
 obj-$(CONFIG_HW_PERF_EVENTS) += pmu.o
 endif
-obj-$(CONFIG_ARCH_MSM_KRAIT) += msm-krait-l2-accessors.o perf_event_msm_krait_l2.o
+obj-$(CONFIG_ARCH_MSM_KRAIT) += msm-krait-l2-accessors.o
 obj-$(CONFIG_ARCH_MSM_KRAIT) += krait-scm.o
 ifdef CONFIG_HW_PERF_EVENTS
+obj-$(CONFIG_ARCH_MSM_KRAIT) += perf_event_msm_krait_l2.o
 obj-$(CONFIG_ARCH_MSM7X27A) += perf_event_msm_pl310.o
 obj-$(CONFIG_ARCH_MSM9625) += perf_event_msm_pl310.o
 obj-$(CONFIG_ARCH_MSM8625) += perf_event_msm_pl310.o
 obj-$(CONFIG_ARCH_MSM9615) += perf_event_msm_pl310.o
-obj-$(CONFIG_DEBUG_FS) += perf_debug.o
+obj-$(CONFIG_DEBUG_FS) += perf_debug.o clock-debug.o
 endif
 
 ifndef CONFIG_MSM_SMP
@@ -380,6 +381,7 @@ obj-$(CONFIG_ARCH_FSM9900) += gpiomux-v2.o gpiomux.o
 
 obj-$(CONFIG_MSM_SLEEP_STATS_DEVICE) += idle_stats_device.o
 obj-$(CONFIG_MSM_DCVS) += msm_dcvs_scm.o msm_dcvs.o msm_mpdecision.o
+obj-$(CONFIG_MSM_HOTPLUG) += msm_hotplug.o
 obj-$(CONFIG_MSM_RUN_QUEUE_STATS) += msm_rq_stats.o
 obj-$(CONFIG_MSM_SHOW_RESUME_IRQ) += msm_show_resume_irq.o
 obj-$(CONFIG_BT_MSM_PINTEST)  += btpintest.o
@@ -444,3 +446,7 @@ obj-$(CONFIG_ARCH_MSM8974) += moca_kernel_probe.o
 obj-$(CONFIG_PERFMAP) += perfmap.o
 obj-$(CONFIG_ARCH_MSM8974) += cpubw-krait.o
 obj-$(CONFIG_HAS_MACH_MEMUTILS) += memutils/
+obj-$(CONFIG_MSM_CPUFREQ_LIMITER) += cpufreq_limit.o
+obj-$(CONFIG_FORCE_FAST_CHARGE) += fastchg.o
+obj-$(CONFIG_ALUCARD_HOTPLUG) += alucard_hotplug.o
+obj-$(CONFIG_INTELLI_PLUG) += intelli_plug.o

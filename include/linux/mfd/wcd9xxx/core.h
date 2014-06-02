@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -133,6 +133,7 @@ struct wcd9xxx_codec_dai_data {
 	u16 grph;				/* slimbus group handle */
 	unsigned long ch_mask;
 	wait_queue_head_t dai_wait;
+	bool bus_down_in_recovery;
 };
 
 #define WCD9XXX_CH(xport, xshift) \
@@ -193,6 +194,11 @@ struct wcd9xxx {
 
 	const struct wcd9xxx_codec_type *codec_type;
 };
+
+#ifdef CONFIG_SOUND_CONTROL_HAX_3_GPL
+int wcd9xxx_reg_read_safe(struct wcd9xxx_core_resource *core_res,
+			  unsigned short reg);
+#endif
 
 int wcd9xxx_interface_reg_read(struct wcd9xxx *wcd9xxx, unsigned short reg);
 int wcd9xxx_interface_reg_write(struct wcd9xxx *wcd9xxx, unsigned short reg,

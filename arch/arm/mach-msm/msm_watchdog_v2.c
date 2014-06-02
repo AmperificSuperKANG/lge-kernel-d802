@@ -122,6 +122,7 @@ static int msm_watchdog_suspend(struct device *dev)
 	__raw_writel(1, wdog_dd->base + WDT0_RST);
 	__raw_writel(0, wdog_dd->base + WDT0_EN);
 	mb();
+	wdog_dd->last_pet = sched_clock();
 	return 0;
 }
 
@@ -134,6 +135,7 @@ static int msm_watchdog_resume(struct device *dev)
 	__raw_writel(1, wdog_dd->base + WDT0_EN);
 	__raw_writel(1, wdog_dd->base + WDT0_RST);
 	mb();
+	wdog_dd->last_pet = sched_clock();
 	return 0;
 }
 
@@ -254,10 +256,6 @@ static void pet_watchdog(struct msm_watchdog_data *wdog_dd)
 	unsigned long long time_ns;
 	unsigned long long slack_ns;
 	unsigned long long bark_time_ns = wdog_dd->bark_time * 1000000ULL;
-
-#ifdef CONFIG_MACH_LGE
-	printk(KERN_INFO "%s\n", __func__);
-#endif
 
 	for (i = 0; i < 2; i++) {
 		count = (__raw_readl(wdog_dd->base + WDT0_STS) >> 1) & 0xFFFFF;

@@ -60,6 +60,7 @@
 #include <linux/kmod.h>
 #include <linux/capability.h>
 #include <linux/binfmts.h>
+#include <linux/sched/sysctl.h>
 
 #include <asm/uaccess.h>
 #include <asm/processor.h>
@@ -103,6 +104,7 @@ extern unsigned int core_pipe_limit;
 extern int pid_max;
 extern int min_free_kbytes;
 extern int extra_free_kbytes;
+extern int wmark_min_kbytes, wmark_low_kbytes, wmark_high_kbytes;
 extern int min_free_order_shift;
 extern int pid_max_min, pid_max_max;
 extern int sysctl_drop_caches;
@@ -143,6 +145,11 @@ static int min_percpu_pagelist_fract = 8;
 
 static int ngroups_max = NGROUPS_MAX;
 static const int cap_last_cap = CAP_LAST_CAP;
+
+/*this is needed for proc_doulongvec_minmax of sysctl_hung_task_timeout_secs */
+#ifdef CONFIG_DETECT_HUNG_TASK
+static unsigned long hung_task_timeout_max = (LONG_MAX/HZ);
+#endif
 
 #ifdef CONFIG_INOTIFY_USER
 #include <linux/inotify.h>
@@ -273,13 +280,6 @@ static struct ctl_table kern_table[] = {
 		.proc_handler	= proc_dointvec,
 	},
 	{
-		.procname	= "sched_ravg_window",
-		.data		= &sysctl_sched_ravg_window,
-		.maxlen		= sizeof(unsigned int),
-		.mode		= 0644,
-		.proc_handler	= proc_dointvec,
-	},
-	{
 		.procname	= "sched_wakeup_load_threshold",
 		.data		= &sysctl_sched_wakeup_load_threshold,
 		.maxlen		= sizeof(unsigned int),
@@ -374,6 +374,13 @@ static struct ctl_table kern_table[] = {
 		.maxlen		= sizeof(int),
 		.mode		= 0644,
 		.proc_handler	= sched_rt_handler,
+	},
+	{
+		.procname	= "sched_rr_timeslice_ms",
+		.data		= &sched_rr_timeslice,
+		.maxlen		= sizeof(int),
+		.mode		= 0644,
+		.proc_handler	= sched_rr_handler,
 	},
 #ifdef CONFIG_SCHED_AUTOGROUP
 	{
@@ -920,6 +927,7 @@ static struct ctl_table kern_table[] = {
 		.maxlen		= sizeof(unsigned long),
 		.mode		= 0644,
 		.proc_handler	= proc_dohung_task_timeout_secs,
+		.extra2		= &hung_task_timeout_max,
 	},
 	{
 		.procname	= "hung_task_warnings",
@@ -1034,6 +1042,32 @@ static struct ctl_table kern_table[] = {
 		.proc_handler	= proc_dointvec,
 	},
 #endif
+	{
+		.procname	= "wmark_min_kbytes",
+		.data		= &wmark_min_kbytes,
+		.maxlen		= sizeof(wmark_min_kbytes),
+		.mode		= 0644,
+		.proc_handler	= wmark_min_kbytes_sysctl_handler,
+		.extra1		= &zero,
+		.extra2		= &wmark_low_kbytes,
+	},
+	{
+		.procname	= "wmark_low_kbytes",
+		.data		= &wmark_low_kbytes,
+		.maxlen		= sizeof(wmark_low_kbytes),
+		.mode		= 0644,
+		.proc_handler	= wmark_low_kbytes_sysctl_handler,
+		.extra1		= &wmark_min_kbytes,
+		.extra2		= &wmark_high_kbytes,
+	},
+	{
+		.procname	= "wmark_high_kbytes",
+		.data		= &wmark_high_kbytes,
+		.maxlen		= sizeof(wmark_high_kbytes),
+		.mode		= 0644,
+		.proc_handler	= wmark_high_kbytes_sysctl_handler,
+		.extra1		= &wmark_low_kbytes,
+	},
 /*
  * NOTE: do not add new entries to this table unless you have read
  * Documentation/sysctl/ctl_unnumbered.txt
@@ -1860,7 +1894,7 @@ static int __do_proc_dointvec(void *tbl_data, struct ctl_table *table,
 	int *i, vleft, first = 1, err = 0;
 	unsigned long page = 0;
 	size_t left;
-	char *kbuf = 0;
+	char *kbuf;
 	
 	if (!tbl_data || !table->maxlen || !*lenp || (*ppos && !write)) {
 		*lenp = 0;
@@ -2078,7 +2112,7 @@ static int __do_proc_doulongvec_minmax(void *data, struct ctl_table *table, int 
 	int vleft, first = 1, err = 0;
 	unsigned long page = 0;
 	size_t left;
-	char *kbuf = NULL;
+	char *kbuf;
 
 	if (!data || !table->maxlen || !*lenp || (*ppos && !write)) {
 		*lenp = 0;

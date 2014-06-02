@@ -2256,6 +2256,7 @@ struct afe_port_cmdrsp_get_param_v2 {
 #define VPM_TX_SM_ECNS_COPP_TOPOLOGY			0x00010F71
 #define VPM_TX_DM_FLUENCE_COPP_TOPOLOGY			0x00010F72
 #define VPM_TX_QMIC_FLUENCE_COPP_TOPOLOGY		0x00010F75
+#define VPM_TX_DM_RFECNS_COPP_TOPOLOGY			0x00010F86
 
 /* Memory map regions command payload used by the
  * #ASM_CMD_SHARED_MEM_MAP_REGIONS ,#ADM_CMD_SHARED_MEM_MAP_REGIONS
@@ -4698,6 +4699,25 @@ struct asm_stream_cmd_open_write_compressed {
  * IEC 61937 packetization is not performed by the aDSP.
  */
 
+} __packed;
+
+
+/*
+    Indicates the number of samples per channel to be removed from the
+    beginning of the stream.
+*/
+#define ASM_DATA_CMD_REMOVE_INITIAL_SILENCE 0x00010D67
+/*
+    Indicates the number of samples per channel to be removed from
+    the end of the stream.
+*/
+#define ASM_DATA_CMD_REMOVE_TRAILING_SILENCE 0x00010D68
+struct asm_data_cmd_remove_silence {
+	struct apr_hdr hdr;
+	u32	num_samples_to_remove;
+	/**< Number of samples per channel to be removed.
+
+	   @values 0 to (2@sscr{32}-1) */
 } __packed;
 
 #define ASM_STREAM_CMD_OPEN_READ_COMPRESSED                        0x00010D95

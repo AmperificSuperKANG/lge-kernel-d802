@@ -201,8 +201,8 @@ static void msmsdcc_pm_qos_update_latency(struct msmsdcc_host *host, int vote)
 	else
 		pm_qos_update_request(&host->pm_qos_req_dma,
 					PM_QOS_DEFAULT_VALUE);
-	/*                                                                      */
-	#if defined(CONFIG_BCMDHD) || defined (CONFIG_BCMDHD_MODULE)
+	/* LGE_CHANGE_S, [WiFi][hayun.kim@lge.com], 2013-06-12, dma qos control */
+	#if (defined(CONFIG_BCMDHD) || defined (CONFIG_BCMDHD_MODULE)) && defined(CONFIG_BROADCOM_WIFI_RESERVED_MEM)
 	{
 		extern void bcm_wifi_req_dma_qos(int vote);
 		if (host->mmc && host->mmc->card && mmc_card_sdio(host->mmc->card)) {
@@ -5875,9 +5875,15 @@ static struct mmc_platform_data *msmsdcc_populate_pdata(struct device *dev)
 		goto err;
 	}
 
-	if (msmsdcc_dt_parse_vreg_info(dev,
-			&pdata->vreg_data->vdd_data, "vdd"))
-		goto err;
+	/*
+	 * Some devices might not use vdd. if qcom,not-use-vdd exists
+	 * skip the parse the vdd
+	 */
+	if (of_property_read_bool(np, "qcom,not-use-vdd") != true) {
+		if (msmsdcc_dt_parse_vreg_info(dev,
+				&pdata->vreg_data->vdd_data, "vdd"))
+			goto err;
+	}
 
 	if (msmsdcc_dt_parse_vreg_info(dev,
 			&pdata->vreg_data->vdd_io_data, "vdd-io"))
